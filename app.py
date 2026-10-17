@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 from PIL import Image
 from ultralytics import YOLO
@@ -9,7 +10,7 @@ st.set_page_config(page_title="TicTacBot", page_icon="🤖", layout="centered")
 st.title("TicTacBot 🎮")
 st.caption(":rainbow[AI-Powered] Tic Tac Toe")
 
-# Collapsible instructions expander for players
+# Collapsible instructions expander for beginners
 with st.expander("📖 How to Play TicTacBot"):
     st.write("1. Make your move (**X**) on your physical board.")
     st.write("2. Take a photo using your camera or upload an image.")
@@ -17,16 +18,22 @@ with st.expander("📖 How to Play TicTacBot"):
     st.write("4. Copy the AI's move (**O**) to your board and click Next Turn!")
     st.write("5. Don't be upset if you cannot win, the difficulty set is 'unbeatable'! 😈")
 
+current_dir = os.path.dirname(os.path.abspath(__file__)) # Define current directory
+yolo_path = os.path.join(current_dir, "best.pt")
+tm_path = os.path.join(current_dir, "keras_model.h5")
+labels_path = os.path.join(current_dir, "labels.txt")
+
 @st.cache_resource # Load heavy AI Models, then cache (remember)
 def load_all_models():
-    yolo = YOLO("best.pt")
-    tm = TeachableMachine(model_path="keras_model.h5", labels_file_path="labels.txt")
+    yolo = YOLO(yolo_path)
+    tm = TeachableMachine(model_path=tm_path, labels_file_path=labels_path)
     return yolo, tm
 
 try:
     yolo_model, tm_model = load_all_models()
 except Exception as e:
-    st.error(f"TicTacBot has encountered a critical error: {e}")
+    st.error(f"TicTacBot has encountered a critical error: Model files not found. Details: {e}")
+    st.stop()  # Stops the app completely so it never crashes with a NameError later!
 
 if "turn" not in st.session_state: # Turn = 1, if not defined previously
     st.session_state.turn = 1
@@ -41,7 +48,7 @@ tab_camera, tab_upload = st.tabs(["📷 Camera", "📁 Upload Image"])
 image_to_process = None
 
 with tab_camera:
-    camera_photo = st.camera_input("Take a photo of your board", key=f"camera_{st.session_state.turn}") # Every camera_photo is unique becuase of key
+    camera_photo = st.camera_input("Take a photo of your board", key=f"camera_{st.session_state.turn}")
     if camera_photo is not None:
         image_to_process = camera_photo
 
@@ -59,10 +66,10 @@ if image_to_process is not None:
             boxes = results[0].boxes.xyxy.cpu().numpy() # Extract cell coordinates
             
             if len(boxes) != 9:
-                st.warning(f"Detected {len(boxes)} cells instead of 9! Try again using a different angle/ligthing.")
+                st.warning(f"Detected {len(boxes)} cells instead of 9! Try again using a different angle/lighting.")
             else:
                 st.toast("Board scanned successfully!", icon="🎯")
-                boxes = sorted(boxes, key=sort_by_y) # Again, boxes variable is unique
+                boxes = sorted(boxes, key=sort_by_y)
                 
                 board = [
                     [".", ".", "."],
@@ -96,80 +103,53 @@ if image_to_process is not None:
                     else:
                         board[row][col] = "." # Empty
                         
-                    cell_index = cell_index + 1 # Because Python numbering starts from 0
+                    cell_index = cell_index + 1
                     
                 st.subheader("Detected Board (Your Move as X):")
                 
                 c1, c2, c3 = st.columns(3)
                 with c1:
-                    if board[0][0] == "X":
-                        st.info("❌ X")
-                    elif board[0][0] == "O":
-                        st.warning("⭕ O")
-                    else:
-                        st.write("⚫ [Empty]")
+                    if board[0][0] == "X": st.info("❌ X")
+                    elif board[0][0] == "O": st.warning("⭕ O")
+                    else: st.write("⚫ [Empty]")
                 with c2:
-                    if board[0][1] == "X":
-                        st.info("❌ X")
-                    elif board[0][1] == "O":
-                        st.warning("⭕ O")
-                    else:
-                        st.write("⚫ [Empty]")
+                    if board[0][1] == "X": st.info("❌ X")
+                    elif board[0][1] == "O": st.warning("⭕ O")
+                    else: st.write("⚫ [Empty]")
                 with c3:
-                    if board[0][2] == "X":
-                        st.info("❌ X")
-                    elif board[0][2] == "O":
-                        st.warning("⭕ O")
-                    else:
-                        st.write("⚫ [Empty]")
+                    if board[0][2] == "X": st.info("❌ X")
+                    elif board[0][2] == "O": st.warning("⭕ O")
+                    else: st.write("⚫ [Empty]")
 
                 c4, c5, c6 = st.columns(3)
                 with c4:
-                    if board[1][0] == "X":
-                        st.info("❌ X")
-                    elif board[1][0] == "O":
-                        st.warning("⭕ O")
-                    else:
-                        st.write("⚫ [Empty]")
+                    if board[1][0] == "X": st.info("❌ X")
+                    elif board[1][0] == "O": st.warning("⭕ O")
+                    else: st.write("⚫ [Empty]")
                 with c5:
-                    if board[1][1] == "X":
-                        st.info("❌ X")
-                    elif board[1][1] == "O":
-                        st.warning("⭕ O")
-                    else:
-                        st.write("⚫ [Empty]")
+                    if board[1][1] == "X": st.info("❌ X")
+                    elif board[1][1] == "O": st.warning("⭕ O")
+                    else: st.write("⚫ [Empty]")
                 with c6:
-                    if board[1][2] == "X":
-                        st.info("❌ X")
-                    elif board[1][2] == "O":
-                        st.warning("⭕ O")
-                    else:
-                        st.write("⚫ [Empty]")
+                    if board[1][2] == "X": st.info("❌ X")
+                    elif board[1][2] == "O": st.warning("⭕ O")
+                    else: st.write("⚫ [Empty]")
 
                 c7, c8, c9 = st.columns(3)
                 with c7:
-                    if board[2][0] == "X":
-                        st.info("❌ X")
-                    elif board[2][0] == "O":
-                        st.warning("⭕ O")
-                    else:
-                        st.write("⚫ [Empty]")
+                    if board[2][0] == "X": st.info("❌ X")
+                    elif board[2][0] == "O": st.warning("⭕ O")
+                    else: st.write("⚫ [Empty]")
                 with c8:
-                    if board[2][1] == "X":
-                        st.info("❌ X")
-                    elif board[2][1] == "O":
-                        st.warning("⭕ O")
-                    else:
-                        st.write("⚫ [Empty]")
+                    if board[2][1] == "X": st.info("❌ X")
+                    elif board[2][1] == "O": st.warning("⭕ O")
+                    else: st.write("⚫ [Empty]")
                 with c9:
-                    if board[2][2] == "X":
-                        st.info("❌ X")
-                    elif board[2][2] == "O":
-                        st.warning("⭕ O")
-                    else:
-                        st.write("⚫ [Empty]")
+                    if board[2][2] == "X": st.info("❌ X")
+                    elif board[2][2] == "O": st.warning("⭕ O")
+                    else: st.write("⚫ [Empty]")
 
-                # Convert to 2-D array (xo requires this format)    
+                # Convert to 2-D array string (xo requires this format)    
                 board_string = board[0][0] + board[0][1] + board[0][2] + \
                                board[1][0] + board[1][1] + board[1][2] + \
                                board[2][0] + board[2][1] + board[2][2]
@@ -183,7 +163,7 @@ if image_to_process is not None:
                     game_board = Board.fromstring(board_string.lower())
                     ai_result = ai.evaluate(game_board, "o")
                     
-                    move = ai_result.positions[0] # positions = [best_move, intermediate_move, losing_move, ...], each in (row, col)
+                    move = ai_result.positions[0]
                     ai_row = move[0]
                     ai_col = move[1]
                     
@@ -194,73 +174,46 @@ if image_to_process is not None:
                     
                     d1, d2, d3 = st.columns(3)
                     with d1:
-                        if board[0][0] == "X":
-                            st.info("❌ X")
-                        elif board[0][0] == "O":
-                            st.warning("⭕ O")
-                        else:
-                            st.write("⚫ [Empty]")
+                        if board[0][0] == "X": st.info("❌ X")
+                        elif board[0][0] == "O": st.warning("⭕ O")
+                        else: st.write("⚫ [Empty]")
                     with d2:
-                        if board[0][1] == "X":
-                            st.info("❌ X")
-                        elif board[0][1] == "O":
-                            st.warning("⭕ O")
-                        else:
-                            st.write("⚫ [Empty]")
+                        if board[0][1] == "X": st.info("❌ X")
+                        elif board[0][1] == "O": st.warning("⭕ O")
+                        else: st.write("⚫ [Empty]")
                     with d3:
-                        if board[0][2] == "X":
-                            st.info("❌ X")
-                        elif board[0][2] == "O":
-                            st.warning("⭕ O")
-                        else:
-                            st.write("⚫ [Empty]")
+                        if board[0][2] == "X": st.info("❌ X")
+                        elif board[0][2] == "O": st.warning("⭕ O")
+                        else: st.write("⚫ [Empty]")
 
                     d4, d5, d6 = st.columns(3)
                     with d4:
-                        if board[1][0] == "X":
-                            st.info("❌ X")
-                        elif board[1][0] == "O":
-                            st.warning("⭕ O")
-                        else:
-                            st.write("⚫ [Empty]")
+                        if board[1][0] == "X": st.info("❌ X")
+                        elif board[1][0] == "O": st.warning("⭕ O")
+                        else: st.write("⚫ [Empty]")
                     with d5:
-                        if board[1][1] == "X":
-                            st.info("❌ X")
-                        elif board[1][1] == "O":
-                            st.warning("⭕ O")
-                        else:
-                            st.write("⚫ [Empty]")
+                        if board[1][1] == "X": st.info("❌ X")
+                        elif board[1][1] == "O": st.warning("⭕ O")
+                        else: st.write("⚫ [Empty]")
                     with d6:
-                        if board[1][2] == "X":
-                            st.info("❌ X")
-                        elif board[1][2] == "O":
-                            st.warning("⭕ O")
-                        else:
-                            st.write("⚫ [Empty]")
+                        if board[1][2] == "X": st.info("❌ X")
+                        elif board[1][2] == "O": st.warning("⭕ O")
+                        else: st.write("⚫ [Empty]")
 
                     d7, d8, d9 = st.columns(3)
                     with d7:
-                        if board[2][0] == "X":
-                            st.info("❌ X")
-                        elif board[2][0] == "O":
-                            st.warning("⭕ O")
-                        else:
-                            st.write("⚫ [Empty]")
+                        if board[2][0] == "X": st.info("❌ X")
+                        elif board[2][0] == "O": st.warning("⭕ O")
+                        else: st.write("⚫ [Empty]")
                     with d8:
-                        if board[2][1] == "X":
-                            st.info("❌ X")
-                        elif board[2][1] == "O":
-                            st.warning("⭕ O")
-                        else:
-                            st.write("⚫ [Empty]")
+                        if board[2][1] == "X": st.info("❌ X")
+                        elif board[2][1] == "O": st.warning("⭕ O")
+                        else: st.write("⚫ [Empty]")
                     with d9:
-                        if board[2][2] == "X":
-                            st.info("❌ X")
-                        elif board[2][2] == "O":
-                            st.warning("⭕ O")
-                        else:
-                            st.write("⚫ [Empty]")
-                            
+                        if board[2][2] == "X": st.info("❌ X")
+                        elif board[2][2] == "O": st.warning("⭕ O")
+                        else: st.write("⚫ [Empty]")
+                        
                     st.toast("AI move calculated successfully!", icon="🤖")
                     st.balloons()
                     
@@ -269,6 +222,7 @@ if image_to_process is not None:
                         st.rerun()
     except Exception as e:
         st.error(f"TicTacBot has encountered a critical error: {e}")
+        st.stop()
 
 st.divider()
 if st.button("Reset Game"):
