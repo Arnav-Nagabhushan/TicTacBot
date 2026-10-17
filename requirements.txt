@@ -1,7 +1,8 @@
 streamlit
 ultralytics
 teachable-machine
+tf-keras
 pillow
 xo
-tf-keras
+opencv-python-headless
 numpy
