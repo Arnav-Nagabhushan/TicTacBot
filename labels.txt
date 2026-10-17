@@ -1,0 +1,3 @@
+0 white_cross
+1 white_circle
+2 empty_cell
