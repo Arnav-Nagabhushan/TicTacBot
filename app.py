@@ -84,7 +84,7 @@ if image_to_process is not None:
     try:
         image_to_process.seek(0)
         image = Image.open(image_to_process).convert("RGB")
-        st.image(image, caption="Image you uploaded", use_container_width=True)
+        st.image(image, caption="Image you uploaded", width="stretch")
 
         with st.spinner("Loading AI models and analysing the board..."):
             yolo_model, tm_model = load_all_models()
