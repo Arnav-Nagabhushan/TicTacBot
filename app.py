@@ -6,9 +6,6 @@ os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["TF_NUM_INTRAOP_THREADS"] = "1"
 os.environ["TF_NUM_INTEROP_THREADS"] = "1"
 
-#
-import faulthandler
-faulthandler.enable(all_threads=True)
 
 import streamlit as st
 from PIL import Image
@@ -34,22 +31,11 @@ temporary_cell_path = os.path.join(current_dir, "temporary_cell.jpg")
 # Load the models only when an image is analysed, so the page can start first.
 @st.cache_resource
 def load_all_models():
-    print("STAGE A: Importing YOLO", flush=True)
     from ultralytics import YOLO
-
-    print("STAGE A: Importing YOLO", flush=True)
     from teachable_machine import TeachableMachine
 
-    #
-    print("STAGE C: Loading YOLO model", flush=True)
     yolo = YOLO(yolo_path)
-
-    #
-    print("STAGE D: Loading Teachable Machine model", flush=True)
     tm = TeachableMachine(model_path=tm_path, labels_file_path=labels_path)
-
-    #
-    print("STAGE E: Both models loaded", flush=True)
     return yolo, tm
 
 
@@ -103,10 +89,7 @@ if image_to_process is not None:
 
         with st.spinner("Loading AI models and analysing the board..."):
             yolo_model, tm_model = load_all_models()
-            #
-            print("STAGE F: Starting YOLO inference", flush=True)
             results = yolo_model(image, conf=0.1, verbose=False)
-            print("STAGE G: YOLO inference completed", flush=True)
         # Get the nine cell boxes found by YOLO.
         if results[0].boxes is None:
             boxes = []
@@ -152,17 +135,7 @@ if image_to_process is not None:
 
                 cell_image = image.crop((x1, y1, x2, y2))
                 cell_image.save(temporary_cell_path)
-                #
-                print(
-                "STAGE H: Classifying cell " + str(cell_index + 1),
-                flush=True
-            )
                 result = tm_model.classify_image(temporary_cell_path)
-                #
-                print(
-                "STAGE I: Classified cell " + str(cell_index + 1),
-                flush=True
-            )
                 class_index = int(result["class_index"])
 
                 # Convert the cell number into its row and column.
