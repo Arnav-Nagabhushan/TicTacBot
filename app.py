@@ -6,6 +6,8 @@ os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["TF_NUM_INTRAOP_THREADS"] = "1"
 os.environ["TF_NUM_INTEROP_THREADS"] = "1"
 
+import faulthandler
+faulthandler.enable()
 
 import streamlit as st
 from PIL import Image
@@ -31,11 +33,20 @@ temporary_cell_path = os.path.join(current_dir, "temporary_cell.jpg")
 # Load the models only when an image is analysed, so the page can start first.
 @st.cache_resource
 def load_all_models():
+    print("DEBUG 1: Importing YOLO", flush=True)
     from ultralytics import YOLO
+
+    print("DEBUG 2: Importing Teachable Machine", flush=True)
     from teachable_machine import TeachableMachine
 
+    print("DEBUG 3: Loading YOLO model", flush=True)
     yolo = YOLO(yolo_path)
+    print("DEBUG 4: YOLO model loaded", flush=True)
+
+    print("DEBUG 5: Loading Teachable Machine model", flush=True)
     tm = TeachableMachine(model_path=tm_path, labels_file_path=labels_path)
+    print("DEBUG 6: Teachable Machine model loaded", flush=True)
+
     return yolo, tm
 
 
@@ -80,8 +91,13 @@ with upload_tab:
         image_to_process = uploaded_file
 
 
-# Analyse the image after the user takes or uploads a photo.
-if image_to_process is not None:
+analyze_clicked = st.button(
+    "Analyze Board 🤖",
+    key="analyze_" + str(st.session_state.game_id) + "_" + str(st.session_state.turn)
+)
+
+# Analyse only when the user clicks the button.
+if image_to_process is not None and analyze_clicked:
     try:
         image_to_process.seek(0)
         image = Image.open(image_to_process).convert("RGB")
@@ -89,7 +105,9 @@ if image_to_process is not None:
 
         with st.spinner("Loading AI models and analysing the board..."):
             yolo_model, tm_model = load_all_models()
+            print("DEBUG 7: Starting YOLO inference", flush=True)
             results = yolo_model(image, conf=0.1, verbose=False)
+            print("DEBUG 8: YOLO inference completed", flush=True)
         # Get the nine cell boxes found by YOLO.
         if results[0].boxes is None:
             boxes = []
@@ -135,7 +153,9 @@ if image_to_process is not None:
 
                 cell_image = image.crop((x1, y1, x2, y2))
                 cell_image.save(temporary_cell_path)
+                print("DEBUG 9: Classifying cell " + str(cell_index + 1), flush=True)
                 result = tm_model.classify_image(temporary_cell_path)
+                print("DEBUG 10: Cell classified " + str(cell_index + 1), flush=True)
                 class_index = int(result["class_index"])
 
                 # Convert the cell number into its row and column.
